@@ -1,7 +1,8 @@
 DEFAULT_SYMBOLS = ('>', '<', '+', '-', '.', ',', '[', ']')
-
 def default_output(x):
-        print(x.getval(), end='')
+    global print_buffer
+    print_buffer += x.getval()
+    print("\nCurrent output: %s\n" %(print_buffer))
 
 class Cell:
     def __init__(self):
@@ -23,13 +24,13 @@ class Cell:
         return self.__val is 0
     
     def __str__(self):
-        return "[%3d]"%(self.__val)
+        return "%03d "%(self.__val)
     
     def __repr__(self):
         return self.__str__()
 
 class Interpreter:
-    def __init__(self, memsize: int = 500, symbols: tuple = DEFAULT_SYMBOLS, output = default_output):
+    def __init__(self, memsize: int = 30000, symbols: tuple = DEFAULT_SYMBOLS, output = default_output):
         self.memory = [Cell() for _ in [None]*memsize]
         self.ptr = 0
         self.iptr = 0
@@ -57,14 +58,7 @@ class Interpreter:
     
     def ip(self):
         self.current.setval(input("Waiting for input: "))
-    
-    def interpret(self, x: str):
-        self.ptr, self.iptr, length = 0, 0, len(x)
-        self.instructions = x
-        while self.iptr < length:
-            self.operations[self.symbols.index(x[self.iptr])]()
-            self.iptr += 1
-    
+        
     def ls(self):
         if self.current.iszero():
             while self.instructions[self.iptr] != ']':
@@ -75,6 +69,29 @@ class Interpreter:
             while self.instructions[self.iptr] != '[':
                 self.iptr -= 1
     
+    def interpret(self, x: str):
+        global print_buffer
+        print_buffer = ""
+        self.ptr, self.iptr, length = 0, 0, len(x)
+        self.instructions = x
+        while self.iptr < length:
+            if x[self.iptr] in self.symbols:
+                self.operations[self.symbols.index(x[self.iptr])]()
+            self.iptr += 1
+        print("Output: %s" %(print_buffer))
+    
+    def dinterpret(self, x: str):
+        global print_buffer
+        print_buffer = ""
+        self.ptr, self.iptr, length = 0, 0, len(x)
+        self.instructions = x
+        while self.iptr < length:
+            print(repr(self))
+            if x[self.iptr] in self.symbols:
+                self.operations[self.symbols.index(x[self.iptr])]()
+            self.iptr += 1
+        print("Output: %s" %(print_buffer))
+
     def __str__(self):
         temp = ""
         for m in self.memory:
@@ -82,4 +99,4 @@ class Interpreter:
         return temp
     
     def __repr__(self):
-        return self.__str__()
+        return self.__str__() + '\n' + "    " * self.ptr + " ^\n" + self.instructions + '\n' + ' ' * self.iptr + '^\n'
